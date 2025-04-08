@@ -45,6 +45,8 @@
   <h2>Cornell Users: Trips by Hour</h2>
   <div id="chart4" class="chart-container"></div>
   <div id="tooltip"></div>
+  <h2>Cornell Affilated Riders (by email)</h2>
+  <div id="chart5" class="chart-container"></div>
 
   <script>
     d3.csv("edu-trips-ithaca-nov-12-24 - edu-trips-ithaca-nov-12-24.csv").then(data => {
@@ -264,6 +266,55 @@
         .attr("dy", "1em")
         .style("text-anchor", "middle")
         .text("Number of Trips");
+      
+        const emailCategories = {
+          "Cornell Affilated":0,
+          "Other":0
+        }
+
+        data.forEach(d => {
+        let email = d.email;
+        let key = "";
+
+        if (email === "@cornell.edu") {
+          key = "Cornell Affilated";
+        } else if(email === "other") {
+          key = "Other"
+        }
+        emailCategories[key]++;
+      });
+
+      const pieDataEmail = Object.entries(emailCategories).map(([key, value]) => ({ key, value }));
+
+      const pieWidthEmail = 500, pieHeightEmail = 500, radiusEmail = Math.min(pieWidthEmail, pieHeightEmail) / 2;
+
+      const svgPieEmail = d3.select("#chart5").append("svg")
+        .attr("width", pieWidthEmail)
+        .attr("height", pieHeightEmail)
+        .append("g")
+        .attr("transform", `translate(${pieWidthEmail / 2}, ${pieHeightEmail / 2})`);
+      const colorEmail = d3.scaleOrdinal()
+        .domain(Object.keys(emailCategories))
+        .range(["#1f77b4", "#ff7f0e"]);
+
+      const pieEmail = d3.pie().value(d => d.value);
+      const arcEmail = d3.arc().innerRadius(radiusEmail * 0.5).outerRadius(radiusEmail);
+
+      svgPieEmail.selectAll("path")
+        .data(pie(pieDataEmail))
+        .enter().append("path")
+        .attr("d", arcEmail)
+        .attr("fill", d => colorEmail(d.data.key))
+        .attr("stroke", "#fff")
+        .style("stroke-width", "2px")
+      svgPieEmail.selectAll("text")
+        .data(pie(pieDataEmail))
+        .enter().append("text")
+        .attr("transform", d => `translate(${arc.centroid(d)})`)
+        .attr("text-anchor", "middle")
+        .attr("font-size", "14px")
+        .attr("fill", "#fff")
+        .text(d => d.data.key)
     }).catch(error => {
       console.error("Error loading CSV data:", error);
     });
